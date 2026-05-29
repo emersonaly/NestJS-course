@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Param, Delete, Put, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { CreateUserDto, UpdateUserDto } from './user.dto';
 
 interface User {
   id: number;
@@ -45,11 +46,17 @@ export class UsersController {
   }
 
   @Post()
-  createUser(@Body() body: User){
-    this.users.push(body);
+  createUser(@Body() body: CreateUserDto){
+    const newUser: User = {
+      id: this.users.length > 0 ? this.users[this.users.length - 1].id + 1 : 1,
+      name: body.name,
+      email: body.email,
+      password: body.password,
+    };
+    this.users.push(newUser);
     return {
       'message': 'User created successfully',
-      'user': body
+      'user': newUser
     }
   }
 
@@ -66,25 +73,10 @@ export class UsersController {
   }
 
   @Put(':id')
-  updateUser(@Param('id') id: string, @Body() body: User){
+  updateUser(@Param('id') id: string, @Body() body: UpdateUserDto){
     const user = this.users.find((user) => user.id === Number(id));
     if(!user || typeof user === 'undefined'){
       return {'message': 'User not found'};
-    }
-    if(body.name){
-      user.name = body.name;
-    }
-    if(body.email && !body.email.includes('@')){
-      throw new UnprocessableEntityException('Invalid email');
-    }
-    else{
-      user.email = body.email;
-    }
-    if(body.password && body.password.length >= 6){
-      user.password = body.password;
-    }
-    else{
-      throw new UnprocessableEntityException('Invalid password');
     }
     return {
       'message': 'User updated successfully',
